@@ -17,7 +17,7 @@ const registerUser = asyncHandler(async (req, res) => {
   if (password.length < 6) {
     res.status(400);
     throw new Error("Password Should be upto 6 characters");
-  }
+  }      
   // check if user email already exist
   const userExist = await User.findOne({ email });
   if (userExist) {
@@ -107,7 +107,65 @@ const LoginUser = asyncHandler(async (req, res) => {
   }
 });
 
+//************* LOG OUT USER  *************//
+
+const logoutUser = asyncHandler ( async (req,res) =>{
+  res.cookie("token","", {
+    path: "/", // if you dont set then by deafult it is going to be root directorty
+    httpOnly: true,
+    expires: new Date(0), // 1 day me expire ho jayega
+    sameSite: "none", // means our frontend and backend can have diffrent urls
+    secure: true, // we specify we are using https
+  });
+
+   res.status(200).json({
+    message:"Succefully logged out"
+  })
+})
+
+// ********* GET USER  *********/
+
+const getUser = asyncHandler( async (req,res ) => { 
+  const user = req.user ;
+  if (user) {
+    const { _id, name, email, photo, phone, bio } = user;
+    res.status(200).json({
+      _id,
+      name,
+      email,
+      photo,
+      phone,
+      bio
+    });
+  } else { 
+    res.status(401);
+    throw new Error("User Not Found");
+  }
+})
+
+/********** LOGIN STATUS ***********/
+
+const LoginStatus = asyncHandler(async(req,res) => {
+  const token = req.cookies.token ; 
+  
+  if(!token){
+    return res.status(400).json(false) 
+  }
+
+  const verified = jwt.verify(token,process.env.JWT_SECRET ) 
+
+  if(verified){
+    return res.status(200).json(true) 
+  }else{
+    return res.status(400).json(false) 
+  }
+
+})
+
 module.exports = {
   registerUser,
   LoginUser,
+  logoutUser,
+  getUser,
+  LoginStatus
 };
